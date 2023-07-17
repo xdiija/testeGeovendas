@@ -46,10 +46,10 @@ $jsonData = '[
 ]';
 
 $products = json_decode($jsonData, true);
-$StockController = new StockController();
+$stockController = new StockController();
 
 foreach ($products as $product) {
-    $result = $StockController->update($product);
+    $result = $stockController->update($product);
     if($result['status'] != 'ok') {
         echo json_encode($result);
         exit();

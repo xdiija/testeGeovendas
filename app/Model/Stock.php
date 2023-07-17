@@ -15,24 +15,35 @@ class Stock extends ConnPDO
         $this->connPdo = parent::connect();
     }
 
-    protected function checkIfProductExists(array $produto): int
+    protected function checkIfProductExists(array $produto): array
     {
-        $sql = "SELECT id FROM estoque
-                WHERE produto = ? AND
-                cor = ? AND
-                tamanho = ? AND
-                deposito = ? AND
-                data_disponibilidade = ?"
-        ;
-        $stmt = $this->connPdo->prepare($sql);
-        $stmt->execute([
-            $produto['produto'],
-            $produto['cor'],
-            $produto['tamanho'],
-            $produto['deposito'],
-            $produto['data_disponibilidade']
-        ]);
-        return $stmt->fetchColumn();
+        try {
+            $sql = "SELECT id FROM estoque
+                    WHERE produto = ? AND
+                    cor = ? AND
+                    tamanho = ? AND
+                    deposito = ? AND
+                    data_disponibilidade = ?"
+            ;
+            $stmt = $this->connPdo->prepare($sql);
+            $stmt->execute([
+                $produto['produto'],
+                $produto['cor'],
+                $produto['tamanho'],
+                $produto['deposito'],
+                $produto['data_disponibilidade']
+            ]);
+            return [
+                'status' => 'ok', 
+                'id' => $stmt->fetchColumn()
+            ];
+            
+        } catch (PDOException $e) {
+            return [
+                'status' => 'error',
+                'msg' => 'Erro ao buscar produto no estoque: ' . $e->getMessage()
+            ];
+        }
     }
 
     protected function addProduct(array $produto): array
@@ -79,6 +90,39 @@ class Stock extends ConnPDO
             return [
                 'status' => 'error',
                 'msg' => 'Erro ao atualizar registro no estoque: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    protected function removeProduct(int $id): array
+    {
+        try {
+            $this->connPdo->beginTransaction();
+            $sql = "DELETE * FROM estoque WHERE id = ?";
+            $stmt = $this->connPdo->prepare($sql);
+            $stmt->execute([$id]);
+            $this->connPdo->commit();
+            return ['status' => 'ok'];
+        } catch (PDOException $e) {
+            $this->connPdo->rollback();
+            return [
+                'status' => 'error',
+                'msg' => 'Erro ao remover registro do estoque: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    protected function getProductById(int $id): array
+    {
+        try {
+            $sql = "SELECT * FROM estoque WHERE id = ?";
+            $stmt = $this->connPdo->prepare($sql);
+            $stmt->execute([$id]);
+            return [$stmt->fetchColumn()];
+        } catch (PDOException $e) {
+            return [
+                'status' => 'error',
+                'msg' => 'Erro ao buscar registro no estoque: ' . $e->getMessage()
             ];
         }
     }

@@ -8,18 +8,28 @@ class StockController extends Stock
 {
     private $stockModel;
 
-    protected function __construct()
+    public function __construct()
     {
         $this->stockModel = new Stock();
     }
 
     public function update(array $produto): array
     {
-        $idProduto = $this->stockModel->checkIfProductExists($produto);
-        if($idProduto) {
-            return $this->stockModel->updateProduct($idProduto, $produto['quantidade']);
+        $result = $this->stockModel->checkIfProductExists($produto);
+        if($result['status'] == 'ok') {
+            return $this->stockModel->updateProduct($result['id'], $produto['quantidade']);
         } else {
             return $this->stockModel->addProduct($produto);
         }
+    }
+
+    public function remove(int $id): array
+    {
+        return $this->stockModel->removeProduct($id);
+    }
+
+    public function getById(int $id): array
+    {
+        return $this->stockModel->getProductById($id);
     }
 }
